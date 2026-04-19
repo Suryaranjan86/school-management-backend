@@ -3,6 +3,7 @@ CREATE SEQUENCE IF NOT EXISTS school_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS user_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS cls_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS stu_seq START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS fee_seq START WITH 1;
 
 -- tables
 
@@ -45,4 +46,17 @@ CREATE TABLE IF NOT EXISTS student (
     school_id VARCHAR(50) NOT NULL,
     FOREIGN KEY (cls_id) REFERENCES classes(id),
     FOREIGN KEY (school_id) REFERENCES school(id)
+);
+CREATE TABLE IF NOT EXISTS fee_payment (
+    id VARCHAR(50) PRIMARY KEY ,
+    student_id VARCHAR(50) NOT NULL,
+    cls_id VARCHAR(50) NOT NULL,
+    batch VARCHAR(10),
+    pay_month VARCHAR(20) NOT NULL,
+    pay_year VARCHAR(50) NOT NULL,
+    payment_date timestamp(6) NOT NULL,
+    transaction_id VARCHAR(255) UNIQUE NOT NULL,
+    mode_of_pay VARCHAR(50) CHECK (mode_of_pay IN ('ONLINE', 'OFFLINE')),
+    FOREIGN KEY (student_id) REFERENCES student(id),
+    FOREIGN KEY (cls_id) REFERENCES classes(id)
 );

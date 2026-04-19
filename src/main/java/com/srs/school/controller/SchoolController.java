@@ -1,5 +1,6 @@
 package com.srs.school.controller;
 
+import com.srs.school.context.SchoolContext;
 import com.srs.school.entity.School;
 import com.srs.school.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,11 @@ public class SchoolController {
 
     @PostMapping
     public ResponseEntity<School> addSchool(@RequestBody School school) {
+        // Use school_id from header
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId != null && !schoolId.isEmpty()) {
+            school.setId(schoolId);
+        }
         School savedSchool = schoolService.saveSchool(school);
         return ResponseEntity.ok(savedSchool);
     }
@@ -27,13 +33,25 @@ public class SchoolController {
         return ResponseEntity.ok(schools);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<School> getSchoolById(@PathVariable String id) {
-        School school = schoolService.getSchoolById(id);
+    @GetMapping("/{schoolId}")
+    public ResponseEntity<School> getSchoolById(@PathVariable String  schoolId) {
+        School school = schoolService.getSchoolById(schoolId);
         if (school != null) {
             return ResponseEntity.ok(school);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Get current school from header
+     */
+    @GetMapping("/current/info")
+    public ResponseEntity<School> getCurrentSchool() {
+        School school = schoolService.getCurrentSchool();
+        if (school != null) {
+            return ResponseEntity.ok(school);
+        }
+        return ResponseEntity.status(401).body(null);
     }
 
     @DeleteMapping("/{id}")

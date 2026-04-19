@@ -15,5 +15,4 @@ public class StudentDto {
     private String email;
     private String batch;
     private String cls_id;
-    private String school_id;
 }

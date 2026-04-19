@@ -1,5 +1,6 @@
 package com.srs.school.service;
 
+import com.srs.school.context.SchoolContext;
 import com.srs.school.dto.StudentDto;
 import com.srs.school.entity.Classes;
 import com.srs.school.entity.School;
@@ -26,10 +27,16 @@ public class StudentService {
     private SchoolRepository schoolRepository;
 
     public Student saveStudent(StudentDto studentDto) {
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            throw new RuntimeException("School ID is required");
+        }
+        
         Classes cls = classRepository.findById(studentDto.getCls_id())
                 .orElseThrow(() -> new RuntimeException("Class not found"));
-        School school = schoolRepository.findById(studentDto.getSchool_id())
+        School school = schoolRepository.findById(schoolId)
                 .orElseThrow(() -> new RuntimeException("School not found"));
+        
         var student = Student.builder()
                 .name(studentDto.getName())
                 .dateOfBirth(studentDto.getDateOfBirth())
@@ -45,26 +52,47 @@ public class StudentService {
     }
 
     public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            return List.of();
+        }
+        return studentRepository.findBySchoolId(schoolId);
     }
 
-     public Student getStudentById(String id) {
-        Optional<Student> student = studentRepository.findById(id);
-        return student.orElse(null);
+    public Student getStudentById(String id) {
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            return null;
+        }
+        return studentRepository.findByIdAndSchoolId(id, schoolId).orElse(null);
     }
 
     public void deleteStudent(String id) {
-        studentRepository.deleteById(id);
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            throw new RuntimeException("School ID is required");
+        }
+        Optional<Student> student = studentRepository.findByIdAndSchoolId(id, schoolId);
+        if (student.isPresent()) {
+            studentRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Student not found in this school");
+        }
     }
 
     public Student updateStudent(String id, StudentDto studentDto) {
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            throw new RuntimeException("School ID is required");
+        }
         Optional<Student> existing = studentRepository.findById(id);
-        if (existing.isPresent()) {
+        if (existing.isPresent() && existing.get().getSchool() != null && 
+            existing.get().getSchool().getId().equals(schoolId)) {
             Classes cls = classRepository.findById(studentDto.getCls_id())
                     .orElseThrow(() -> new RuntimeException("Class not found"));
-            School school = schoolRepository.findById(studentDto.getSchool_id())
+            School school = schoolRepository.findById(schoolId)
                     .orElseThrow(() -> new RuntimeException("School not found"));
-            var student=existing.get();
+            var student = existing.get();
             student.setId(id);
             student.setName(studentDto.getName());
             student.setDateOfBirth(studentDto.getDateOfBirth());
@@ -77,6 +105,6 @@ public class StudentService {
             student.setSchool(school);
             return studentRepository.save(student);
         }
-        return null;
+        throw new RuntimeException("Student not found in this school");
     }
 }

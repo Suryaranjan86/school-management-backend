@@ -1,5 +1,7 @@
 package com.srs.school.controller;
 
+import com.srs.school.dto.LoginRequest;
+import com.srs.school.dto.LoginResponse;
 import com.srs.school.entity.User;
 import com.srs.school.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,4 +52,27 @@ public class UserController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    /**
+     * Login endpoint - authenticates user with username and password
+     * Returns username and school_id on successful authentication
+     * 
+     * @param loginRequest containing username and password
+     * @return LoginResponse with username, userId, schoolId, and authentication status message
+     */
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+        LoginResponse response = userService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
+        
+        // Check if authentication was successful by verifying if schoolId is set
+        if (response.getSchoolId() != null && !response.getSchoolId().isEmpty()) {
+            return ResponseEntity.ok(response);
+        } else if (response.getUsername() != null && !response.getUsername().isEmpty()) {
+            // User exists but school_id is null
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(401).body(response);
+        }
+    }
 }
+
