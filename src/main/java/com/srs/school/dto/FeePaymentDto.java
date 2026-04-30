@@ -14,4 +14,5 @@ public class FeePaymentDto {
     private Date paymentDate;
     private String transactionId;
     private String modeOfPay;
+    private double amount;
 }

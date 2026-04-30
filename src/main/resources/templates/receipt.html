@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        body { font-family: Arial; }
+        .container { border:2px solid black; padding:10px; }
+
+        .header { display:flex; border-bottom:2px solid black; }
+        .logo { width:80px; }
+        .school { flex:1; text-align:center; }
+
+        table { width:100%; border-collapse:collapse; margin-top:10px; }
+        table, th, td { border:1px solid black; }
+        th, td { padding:5px; text-align:center; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="header">
+        <img th:src="${logo}" class="logo"/>
+
+        <div class="school">
+            <b th:text="${schoolName}"></b><br/>
+            <span th:text="${address}"></span><br/>
+            Phone: <span th:text="${phone}"></span>
+        </div>
+    </div>
+
+    <h3 style="text-align:center;">RECEIPT</h3>
+
+    <div>
+        Receipt No: <b th:text="${receiptNo}"></b>
+        <span style="float:right;">Date: <span th:text="${date}"></span></span>
+    </div>
+
+    <div>Student: <span th:text="${studentName}"></span></div>
+    <div>Father: <span th:text="${fatherName}"></span></div>
+
+    <div>
+        Class: <span th:text="${className}"></span>
+        <span style="float:right;">Batch: <span th:text="${batch}"></span></span>
+    </div>
+
+    <table>
+        <tr>
+            <th>PARTICULARS</th>
+            <th>MONTH</th>
+            <th>AMOUNT</th>
+        </tr>
+
+        <tr>
+            <td>Tuition Fees</td>
+            <td th:text="${month}"></td>
+            <td th:text="${amount}"></td>
+        </tr>
+
+        <tr>
+            <td colspan="2"><b>TOTAL</b></td>
+            <td><b th:text="${amount}"></b></td>
+        </tr>
+    </table>
+
+    <div>In Words: <span th:text="${amountWords}"></span></div>
+    <div>Mode: <span th:text="${mode}"></span></div>
+    <div>Txn ID: <span th:text="${txnId}"></span></div>
+
+</div>
+</body>
+</html>

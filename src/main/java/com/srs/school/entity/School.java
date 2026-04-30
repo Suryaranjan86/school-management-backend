@@ -23,4 +23,6 @@ public class School {
     private String state;
     private String district;
     private String pin;
+    private String phone;
+    private String logoUrl;
 }

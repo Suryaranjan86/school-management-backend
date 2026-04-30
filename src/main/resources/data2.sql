@@ -15,5 +15,16 @@ INSERT INTO classes (name) VALUES ('11th');
 INSERT INTO classes (name) VALUES ('12th');
 
 -- Sample data for schools
-INSERT INTO school (name, address, state, district, pin) VALUES ('Green Valley School', '123 Main Street, City Center', 'Maharashtra', 'Mumbai', '400001');
-INSERT INTO school (name, address, state, district, pin) VALUES ('Blue Ridge Academy', '456 Elm Avenue, Suburb Area', 'Karnataka', 'Bangalore', '560001');
+INSERT INTO school (name, address, state, district, pin,phone,logo_url)
+ VALUES ('Army_Public_School', '123 Main Street, City Center',
+'Maharashtra', 'Mumbai', '400001','9876543210','/images/Army_Public_School.png');
+
+INSERT INTO school (name, address, state, district, pin,phone,logo_url)
+ VALUES ('Kendriya Vidyalaya', '456 Elm Avenue, Suburb Area', 'Karnataka',
+ 'Bangalore', '560001','9876543211','/images/Kendriya_Vidyalaya.png');
+
+INSERT INTO public.users(name, email, username, password, role, school_id)
+VALUES ('admin1', 'admin1@gmail.com', 'admin1', 'admin1', 'admin', 'sch-1');
+
+INSERT INTO public.users(name, email, username, password, role, school_id)
+VALUES ('admin2', 'admin2@gmail.com', 'admin2', 'admin2', 'admin', 'sch-2');

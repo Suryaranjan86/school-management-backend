@@ -26,6 +26,9 @@ public class FeePaymentService {
     @Autowired
     private ClassRepository classRepository;
 
+    @Autowired
+    private ReceiptService receiptService;
+
     public FeePayment saveFeePayment(FeePaymentDto feePaymentDto) {
         Student student = studentRepository.findById(feePaymentDto.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -39,6 +42,8 @@ public class FeePaymentService {
                 .payYear(feePaymentDto.getPayYear())
                 .paymentDate(feePaymentDto.getPaymentDate())
                 .transactionId(feePaymentDto.getTransactionId())
+                .amount(feePaymentDto.getAmount())
+                .receiptNo(receiptService.generateReceiptNo())
                 .modeOfPay(ModeOfPay.valueOf(feePaymentDto.getModeOfPay().toUpperCase()))
                 .build();
         return feePaymentRepository.save(feePayment);

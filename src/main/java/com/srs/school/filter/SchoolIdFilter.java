@@ -25,8 +25,7 @@ public class SchoolIdFilter implements Filter {
         "/api/users/login",
         "/api/users/register",
         "/api/users/forgot-password",
-        "/api/users/reset-password",
-            "/api/schools"
+        "/api/users/reset-password"
     };
     
     @Override
@@ -36,7 +35,6 @@ public class SchoolIdFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         String requestPath = httpRequest.getRequestURI();
-        System.out.println("METHOD = " + httpRequest.getMethod());
         if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
             chain.doFilter(request, response);
             return;

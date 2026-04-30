@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -37,4 +38,6 @@ public class FeePayment {
     private String transactionId;
     @Enumerated(EnumType.STRING)
     private ModeOfPay modeOfPay;
+    private Double amount;
+    private String receiptNo;
 }

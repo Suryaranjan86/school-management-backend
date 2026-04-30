@@ -4,6 +4,7 @@ CREATE SEQUENCE IF NOT EXISTS user_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS cls_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS stu_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS fee_seq START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS receipt_seq START 1;
 
 -- tables
 
@@ -13,7 +14,9 @@ CREATE TABLE IF NOT EXISTS school  (
     address VARCHAR(500),
     state VARCHAR(100),
     district VARCHAR(100),
-    pin VARCHAR(10)
+    pin VARCHAR(10),
+    phone VARCHAR(20),
+    logo_url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -54,6 +57,8 @@ CREATE TABLE IF NOT EXISTS fee_payment (
     batch VARCHAR(10),
     pay_month VARCHAR(20) NOT NULL,
     pay_year VARCHAR(50) NOT NULL,
+    amount float(53) NOT NULL,
+    receipt_no VARCHAR(50) UNIQUE,
     payment_date timestamp(6) NOT NULL,
     transaction_id VARCHAR(255) UNIQUE NOT NULL,
     mode_of_pay VARCHAR(50) CHECK (mode_of_pay IN ('ONLINE', 'OFFLINE')),
