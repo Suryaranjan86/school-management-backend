@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS student (
     date_of_birth timestamp(6) NOT NULL,
     address VARCHAR(500) NOT NULL,
     email VARCHAR(255),
+    gender VARCHAR(20),
     batch VARCHAR(10),
     cls_id VARCHAR(50) NOT NULL,
     school_id VARCHAR(50) NOT NULL,

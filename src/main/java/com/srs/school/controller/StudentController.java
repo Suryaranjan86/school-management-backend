@@ -3,6 +3,8 @@ package com.srs.school.controller;
 import com.srs.school.dto.StudentDto;
 import com.srs.school.entity.Student;
 import com.srs.school.service.StudentService;
+import com.srs.school.dto.ClassCountDto;
+import com.srs.school.dto.GenderSummaryDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,5 +52,17 @@ public class StudentController {
             return ResponseEntity.ok(updated);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/by-class")
+    public ResponseEntity<List<ClassCountDto>> studentsByClass() {
+        List<ClassCountDto> list = studentService.getStudentsByClassSummary();
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/gender-summary")
+    public ResponseEntity<GenderSummaryDto> genderSummary() {
+        GenderSummaryDto dto = studentService.getGenderSummary();
+        return ResponseEntity.ok(dto);
     }
 }

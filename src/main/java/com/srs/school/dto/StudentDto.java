@@ -14,5 +14,6 @@ public class StudentDto {
     private String address;
     private String email;
     private String batch;
+    private String gender;
     private String cls_id;
 }

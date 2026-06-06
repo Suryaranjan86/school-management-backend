@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import com.srs.school.dto.ClassCountDto;
+import com.srs.school.dto.GenderSummaryDto;
 
 @Service
 public class StudentService {
@@ -45,10 +48,45 @@ public class StudentService {
                 .address(studentDto.getAddress())
                 .email(studentDto.getEmail())
                 .batch(studentDto.getBatch())
+                .gender(studentDto.getGender())
                 .cls(cls)
                 .school(school)
                 .build();
         return studentRepository.save(student);
+    }
+
+    public List<ClassCountDto> getStudentsByClassSummary() {
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            return List.of();
+        }
+        List<Object[]> rows = studentRepository.countStudentsByClass(schoolId);
+        List<ClassCountDto> result = new ArrayList<>();
+        for (Object[] r : rows) {
+            String className = (String) r[0];
+            Long count = (Long) r[1];
+            result.add(new ClassCountDto(className, count));
+        }
+        return result;
+    }
+
+    public GenderSummaryDto getGenderSummary() {
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            return new GenderSummaryDto(0L, 0L);
+        }
+        List<Object[]> rows = studentRepository.countStudentsByGender(schoolId);
+        long male = 0L;
+        long female = 0L;
+        for (Object[] r : rows) {
+            String gender = (String) r[0];
+            Long count = (Long) r[1];
+            if (gender == null) continue;
+            String g = gender.toLowerCase();
+            if (g.equals("male") || g.equals("m")) male = count;
+            else if (g.equals("female") || g.equals("f")) female = count;
+        }
+        return new GenderSummaryDto(male, female);
     }
 
     public List<Student> getAllStudents() {
@@ -101,6 +139,7 @@ public class StudentService {
             student.setAddress(studentDto.getAddress());
             student.setEmail(studentDto.getEmail());
             student.setBatch(studentDto.getBatch());
+            student.setGender(studentDto.getGender());
             student.setCls(cls);
             student.setSchool(school);
             return studentRepository.save(student);

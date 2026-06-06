@@ -29,6 +29,7 @@ public class Student {
     private String address;
     private String email;
     private String batch;
+    private String gender;
 
     @ManyToOne
     @JoinColumn(name = "cls_id")
