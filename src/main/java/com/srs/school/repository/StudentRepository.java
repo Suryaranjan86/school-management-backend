@@ -1,22 +1,181 @@
 package com.srs.school.repository;
 
-import com.srs.school.entity.Student;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import com.srs.school.dto.StudentRequestDto;
+import com.srs.school.dto.StudentResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface StudentRepository extends JpaRepository<Student, String> {
-    List<Student> findBySchoolId(String schoolId);
-    Optional<Student> findByIdAndSchoolId(String id, String schoolId);
+public class StudentRepository {
 
-    @Query("SELECT c.name, COUNT(s) FROM Student s JOIN s.cls c WHERE s.school.id = :schoolId GROUP BY c.name ORDER BY c.name")
-    List<Object[]> countStudentsByClass(@Param("schoolId") String schoolId);
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
-    @Query("SELECT s.gender, COUNT(s) FROM Student s WHERE s.school.id = :schoolId GROUP BY s.gender")
-    List<Object[]> countStudentsByGender(@Param("schoolId") String schoolId);
+    /**
+     * RowMapper for Student entity
+     */
+    private RowMapper<StudentResponse> studentRowMapper = (rs, rowNum) -> StudentResponse.builder()
+            .id(rs.getString("id"))
+            .name(rs.getString("name"))
+            .fatherName(rs.getString("father_name"))
+            .motherName(rs.getString("mother_name"))
+            .dateOfBirth(rs.getTimestamp("date_of_birth") != null ? new java.util.Date(rs.getTimestamp("date_of_birth").getTime()) : null)
+            .address(rs.getString("address"))
+            .email(rs.getString("email"))
+            .gender(rs.getString("gender"))
+            .build();
+
+    /**
+     * RowMapper for StudentDto
+     */
+    private RowMapper<StudentRequestDto> studentDtoRowMapper = (rs, rowNum) -> new StudentRequestDto(
+            rs.getString("student_id"),
+            rs.getString("name"),
+            rs.getString("father_name"),
+            rs.getString("mother_name"),
+            rs.getTimestamp("date_of_birth") != null ? new java.util.Date(rs.getTimestamp("date_of_birth").getTime()) : null,
+            rs.getString("address"),
+            rs.getString("email"),
+            rs.getString("academic_year"),
+            rs.getString("gender"),
+            rs.getString("cls_id") != null ? rs.getString("cls_id") : "",
+            rs.getString("cls_name") != null ? rs.getString("cls_name") : "",
+            rs.getString("class_roll_no"),
+            rs.getString("is_current_academic_year")
+    );
+
+    /**
+     * Save a new student
+     */
+    public StudentResponse save(StudentResponse student) {
+        String sql = "INSERT INTO student (id, name, father_name, mother_name, date_of_birth, address, email, gender, school_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        jdbcTemplate.update(sql,
+                student.getId(),
+                student.getName(),
+                student.getFatherName(),
+                student.getMotherName(),
+                student.getDateOfBirth(),
+                student.getAddress(),
+                student.getEmail(),
+                student.getGender(),
+                student.getSchoolId()
+        );
+        
+        return student;
+    }
+
+    /**
+     * Update an existing student
+     */
+    public StudentResponse update(StudentResponse student) {
+        String sql = "UPDATE student SET name = ?, father_name = ?, mother_name = ?, date_of_birth = ?, " +
+                "address = ?, email = ?, gender = ? WHERE id = ?";
+        
+        jdbcTemplate.update(sql,
+                student.getName(),
+                student.getFatherName(),
+                student.getMotherName(),
+                student.getDateOfBirth(),
+                student.getAddress(),
+                student.getEmail(),
+                student.getGender(),
+                student.getId()
+        );
+        
+        return student;
+    }
+
+    /**
+     * Find student by ID
+     */
+    public Optional<StudentResponse> findById(String id) {
+        String sql = "SELECT id, name, father_name, mother_name, date_of_birth, address, email, gender, school_id FROM student WHERE id = ? and is_deleted='N'";
+        
+        try {
+            StudentResponse student = jdbcTemplate.queryForObject(sql, studentRowMapper, id);
+            return Optional.of(student);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+
+
+    /**
+     * Find student by ID and school ID
+     */
+    public Optional<StudentResponse> findByIdAndSchoolId(String id, String schoolId) {
+        String sql = "SELECT id, name, father_name, mother_name, date_of_birth, address, email, gender, school_id FROM student WHERE id = ? AND school_id = ? AND  is_deleted='N'";
+        
+        try {
+            StudentResponse student = jdbcTemplate.queryForObject(sql, studentRowMapper, id, schoolId);
+            return Optional.of(student);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Delete student by ID
+     */
+    public void deleteById(String id) {
+        String sql = "UPDATE student SET is_deleted = 'Y' WHERE id = ?";
+        jdbcTemplate.update(sql, id);
+    }
+
+    /**
+     * Count students by gender for a school
+     */
+    public List<Object[]> countStudentsByGender(String schoolId) {
+        String sql = "SELECT gender, COUNT(*) as count FROM student WHERE school_id = ? AND  is_deleted='N' GROUP BY gender ";
+        
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Object[] row = new Object[2];
+            row[0] = rs.getString("gender");
+            row[1] = rs.getLong("count");
+            return row;
+        }, schoolId);
+    }
+
+    /**
+     * Get all students with their academic records as StudentDto
+     */
+    public List<StudentRequestDto> getAllStudentsDtoBySchoolId(String schoolId) {
+        String sql = "SELECT s.id as student_id, s.name, s.father_name, s.mother_name, s.date_of_birth, s.address, s.email, s.gender, " +
+                "sar.academic_year, COALESCE(sar.cls_id, '') as cls_id, COALESCE(c.name, '') as cls_name, " +
+                "sar.class_roll_no, sar.is_current_academic_year " +
+                "FROM student s " +
+                "LEFT JOIN student_academic_record sar ON s.id = sar.student_id AND sar.is_current_academic_year = 'Y' " +
+                "LEFT JOIN classes c ON sar.cls_id = c.id " +
+                "WHERE s.school_id = ? and s.is_deleted='N'";
+        
+        return jdbcTemplate.query(sql, studentDtoRowMapper, schoolId);
+    }
+
+    /**
+     * Get a specific student by ID and school ID as StudentDto
+     */
+    public Optional<StudentRequestDto> getStudentDtoByIdAndSchoolId(String id, String schoolId) {
+        String sql = "SELECT s.id as student_id, s.name, s.father_name, s.mother_name, s.date_of_birth, s.address, s.email, s.gender, " +
+                "sar.academic_year, COALESCE(sar.cls_id, '') as cls_id, COALESCE(c.name, '') as cls_name, " +
+                "sar.class_roll_no, sar.is_current_academic_year " +
+                "FROM student s " +
+                "LEFT JOIN student_academic_record sar ON s.id = sar.student_id AND sar.is_current_academic_year = 'Y' " +
+                "LEFT JOIN classes c ON sar.cls_id = c.id " +
+                "WHERE s.id = ? AND s.school_id = ? and s.is_deleted='N'";
+        
+        try {
+            StudentRequestDto studentDto = jdbcTemplate.queryForObject(sql, studentDtoRowMapper, id, schoolId);
+            return Optional.of(studentDto);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 }

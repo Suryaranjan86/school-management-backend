@@ -1,7 +1,7 @@
 package com.srs.school.controller;
 
-import com.srs.school.dto.StudentDto;
-import com.srs.school.entity.Student;
+import com.srs.school.dto.StudentRequestDto;
+import com.srs.school.dto.StudentResponse;
 import com.srs.school.service.StudentService;
 import com.srs.school.dto.ClassCountDto;
 import com.srs.school.dto.GenderSummaryDto;
@@ -19,20 +19,20 @@ public class StudentController {
     private StudentService studentService;
 
     @PostMapping
-    public ResponseEntity<Student> addStudent(@RequestBody StudentDto student) {
-        Student savedStudent = studentService.saveStudent(student);
+    public ResponseEntity<StudentResponse> addStudent(@RequestBody StudentRequestDto student) {
+        StudentResponse savedStudent = studentService.saveStudent(student);
         return ResponseEntity.ok(savedStudent);
     }
 
     @GetMapping
-    public ResponseEntity<List<Student>> getAllStudents() {
-        List<Student> students = studentService.getAllStudents();
+    public ResponseEntity<List<StudentRequestDto>> getAllStudents() {
+        List<StudentRequestDto> students = studentService.getAllStudents();
         return ResponseEntity.ok(students);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Student> getStudentById(@PathVariable String id) {
-        Student student = studentService.getStudentById(id);
+    public ResponseEntity<StudentRequestDto> getStudentById(@PathVariable String id) {
+        StudentRequestDto student = studentService.getStudentById(id);
         if (student != null) {
             return ResponseEntity.ok(student);
         }
@@ -46,8 +46,8 @@ public class StudentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Student> updateStudent(@PathVariable String id, @RequestBody StudentDto studentDto) {
-        Student updated = studentService.updateStudent(id, studentDto);
+    public ResponseEntity<StudentResponse> updateStudent(@PathVariable String id, @RequestBody StudentRequestDto studentDto) {
+        StudentResponse updated = studentService.updateStudent(id, studentDto);
         if (updated != null) {
             return ResponseEntity.ok(updated);
         }

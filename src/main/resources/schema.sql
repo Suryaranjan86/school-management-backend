@@ -5,6 +5,7 @@ CREATE SEQUENCE IF NOT EXISTS cls_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS stu_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS fee_seq START WITH 1;
 CREATE SEQUENCE IF NOT EXISTS receipt_seq START 1;
+CREATE SEQUENCE IF NOT EXISTS stu_aca_rec_seq START 1;
 
 -- tables
 
@@ -16,6 +17,9 @@ CREATE TABLE IF NOT EXISTS school  (
     district VARCHAR(100),
     pin VARCHAR(10),
     phone VARCHAR(20),
+    payment_mode VARCHAR(10) CHECK (payment_mode IN ('HALF_YEARLY', 'QUARTERLY', 'MONTHLY', 'YEARLY')),
+    session_start_month VARCHAR(20) NOT NULL,
+    session_end_month VARCHAR(20) NOT NULL,
     logo_url TEXT
 );
 
@@ -45,24 +49,32 @@ CREATE TABLE IF NOT EXISTS student (
     address VARCHAR(500) NOT NULL,
     email VARCHAR(255),
     gender VARCHAR(20),
-    batch VARCHAR(10),
-    cls_id VARCHAR(50) NOT NULL,
     school_id VARCHAR(50) NOT NULL,
-    FOREIGN KEY (cls_id) REFERENCES classes(id),
+    is_deleted VARCHAR(1) CHECK (is_deleted IN ('Y', 'N')) DEFAULT 'N',
     FOREIGN KEY (school_id) REFERENCES school(id)
+);
+CREATE TABLE IF NOT EXISTS student_academic_record (
+    id VARCHAR(50) PRIMARY KEY ,
+    academic_year VARCHAR(20),
+    cls_id VARCHAR(50) NOT NULL,
+    student_id VARCHAR(50) NOT NULL,
+    class_roll_no VARCHAR(20) NOT NULL,
+    is_current_academic_year VARCHAR(1) CHECK (is_current_academic_year IN ('Y', 'N')),
+    FOREIGN KEY (cls_id) REFERENCES classes(id),
+    FOREIGN KEY (student_id) REFERENCES student(id),
+    CONSTRAINT uk_student_roll
+    UNIQUE (academic_year, cls_id, student_id,class_roll_no)
 );
 CREATE TABLE IF NOT EXISTS fee_payment (
     id VARCHAR(50) PRIMARY KEY ,
-    student_id VARCHAR(50) NOT NULL,
-    cls_id VARCHAR(50) NOT NULL,
-    batch VARCHAR(10),
+    stu_aca_rec_id VARCHAR(50) NOT NULL,
     pay_month VARCHAR(20) NOT NULL,
     pay_year VARCHAR(50) NOT NULL,
     amount float(53) NOT NULL,
     receipt_no VARCHAR(50) UNIQUE,
     payment_date timestamp(6) NOT NULL,
-    transaction_id VARCHAR(255) UNIQUE NOT NULL,
+    transaction_id VARCHAR(255) UNIQUE,
+    offline_slip_no VARCHAR(255) UNIQUE,
     mode_of_pay VARCHAR(50) CHECK (mode_of_pay IN ('ONLINE', 'OFFLINE')),
-    FOREIGN KEY (student_id) REFERENCES student(id),
-    FOREIGN KEY (cls_id) REFERENCES classes(id)
+    FOREIGN KEY (stu_aca_rec_id) REFERENCES student_academic_record(id)
 );

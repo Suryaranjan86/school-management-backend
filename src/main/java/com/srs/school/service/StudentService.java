@@ -1,21 +1,18 @@
 package com.srs.school.service;
 
 import com.srs.school.context.SchoolContext;
-import com.srs.school.dto.StudentDto;
-import com.srs.school.entity.Classes;
-import com.srs.school.entity.School;
-import com.srs.school.entity.Student;
-import com.srs.school.repository.ClassRepository;
-import com.srs.school.repository.SchoolRepository;
-import com.srs.school.repository.StudentRepository;
+import com.srs.school.dto.*;
+import com.srs.school.dto.StudentResponse;
+import com.srs.school.dto.StudentAcademicRecord;
+import com.srs.school.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
-import com.srs.school.dto.ClassCountDto;
-import com.srs.school.dto.GenderSummaryDto;
 
 @Service
 public class StudentService {
@@ -29,30 +26,39 @@ public class StudentService {
     @Autowired
     private SchoolRepository schoolRepository;
 
-    public Student saveStudent(StudentDto studentDto) {
+    @Autowired
+    private StudentAcademicRecordRepository studentAcademicRecordRepository;
+    @Autowired
+    private SequenceRepository sequenceRepository;
+
+
+    @Transactional
+    public StudentResponse saveStudent(StudentRequestDto studentDto) {
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             throw new RuntimeException("School ID is required");
         }
-        
-        Classes cls = classRepository.findById(studentDto.getCls_id())
-                .orElseThrow(() -> new RuntimeException("Class not found"));
-        School school = schoolRepository.findById(schoolId)
-                .orElseThrow(() -> new RuntimeException("School not found"));
-        
-        var student = Student.builder()
+        // Generate student ID using StuIdGenerator logic
+        String studentId = sequenceRepository.generateStudentId();
+
+        var student = StudentResponse.builder()
+                .id(studentId)
                 .name(studentDto.getName())
                 .dateOfBirth(studentDto.getDateOfBirth())
                 .fatherName(studentDto.getFatherName())
                 .motherName(studentDto.getMotherName())
                 .address(studentDto.getAddress())
                 .email(studentDto.getEmail())
-                .batch(studentDto.getBatch())
                 .gender(studentDto.getGender())
-                .cls(cls)
-                .school(school)
+                .schoolId(schoolId)
                 .build();
-        return studentRepository.save(student);
+        StudentResponse savedStudent = studentRepository.save(student);
+
+        // Handle student academic record
+        handleStudentAcademicRecord(savedStudent.getId(), schoolId,
+                studentDto.getAcademicYear(), studentDto.getClsId(), studentDto.getClassRollNo());
+
+        return savedStudent;
     }
 
     public List<ClassCountDto> getStudentsByClassSummary() {
@@ -60,7 +66,7 @@ public class StudentService {
         if (schoolId == null || schoolId.isEmpty()) {
             return List.of();
         }
-        List<Object[]> rows = studentRepository.countStudentsByClass(schoolId);
+        List<Object[]> rows = new ArrayList<>();
         List<ClassCountDto> result = new ArrayList<>();
         for (Object[] r : rows) {
             String className = (String) r[0];
@@ -89,20 +95,20 @@ public class StudentService {
         return new GenderSummaryDto(male, female);
     }
 
-    public List<Student> getAllStudents() {
+    public List<StudentRequestDto> getAllStudents() {
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             return List.of();
         }
-        return studentRepository.findBySchoolId(schoolId);
+        return studentRepository.getAllStudentsDtoBySchoolId(schoolId);
     }
 
-    public Student getStudentById(String id) {
+    public StudentRequestDto getStudentById(String id) {
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             return null;
         }
-        return studentRepository.findByIdAndSchoolId(id, schoolId).orElse(null);
+        return studentRepository.getStudentDtoByIdAndSchoolId(id, schoolId).orElse(null);
     }
 
     public void deleteStudent(String id) {
@@ -110,7 +116,7 @@ public class StudentService {
         if (schoolId == null || schoolId.isEmpty()) {
             throw new RuntimeException("School ID is required");
         }
-        Optional<Student> student = studentRepository.findByIdAndSchoolId(id, schoolId);
+        Optional<StudentResponse> student = studentRepository.findByIdAndSchoolId(id, schoolId);
         if (student.isPresent()) {
             studentRepository.deleteById(id);
         } else {
@@ -118,18 +124,11 @@ public class StudentService {
         }
     }
 
-    public Student updateStudent(String id, StudentDto studentDto) {
+    @Transactional
+    public StudentResponse updateStudent(String id, StudentRequestDto studentDto) {
         String schoolId = SchoolContext.getSchoolId();
-        if (schoolId == null || schoolId.isEmpty()) {
-            throw new RuntimeException("School ID is required");
-        }
-        Optional<Student> existing = studentRepository.findById(id);
-        if (existing.isPresent() && existing.get().getSchool() != null && 
-            existing.get().getSchool().getId().equals(schoolId)) {
-            Classes cls = classRepository.findById(studentDto.getCls_id())
-                    .orElseThrow(() -> new RuntimeException("Class not found"));
-            School school = schoolRepository.findById(schoolId)
-                    .orElseThrow(() -> new RuntimeException("School not found"));
+        Optional<StudentResponse> existing = studentRepository.findById(id);
+        if (existing.isPresent()) {
             var student = existing.get();
             student.setId(id);
             student.setName(studentDto.getName());
@@ -138,12 +137,93 @@ public class StudentService {
             student.setMotherName(studentDto.getMotherName());
             student.setAddress(studentDto.getAddress());
             student.setEmail(studentDto.getEmail());
-            student.setBatch(studentDto.getBatch());
             student.setGender(studentDto.getGender());
-            student.setCls(cls);
-            student.setSchool(school);
-            return studentRepository.save(student);
+            student.setSchoolId(schoolId);
+            StudentResponse updatedStudent = studentRepository.update(student);
+
+            // Handle student academic record
+            handleStudentAcademicRecord(updatedStudent.getId(), schoolId,
+                    studentDto.getAcademicYear(), studentDto.getClsId(), studentDto.getClassRollNo());
+
+            return updatedStudent;
         }
         throw new RuntimeException("Student not found in this school");
     }
+
+    /**
+     * Handles the student academic record logic:
+     * 1. Checks if a record exists with matching academicYear and classId
+     * 2. If matching record found: marks it as current ('Y')
+     * 3. If no matching record found: creates a new record with 'Y' and marks all other records as 'N'
+     */
+    private void handleStudentAcademicRecord(String studentId, String schoolId, String academicYear,
+                                             String clsId, String classRollNo) {
+        if (academicYear == null || academicYear.isEmpty()) {
+            return; // Skip if academic year is not provided
+        }
+
+        // Get all existing academic records for this student
+        List<StudentAcademicRecord> existingRecords =
+                studentAcademicRecordRepository.findByStudentId(studentId, schoolId);
+
+        if (existingRecords.isEmpty()) {
+            // Create initial record if no records exist
+            StudentAcademicRecord newRecord = StudentAcademicRecord.builder()
+                    .id(sequenceRepository.generateStudentAcademicRecordId())
+                    .studentId(studentId)
+                    .academicYear(academicYear)
+                    .clsId(clsId)
+                    .classRollNo(classRollNo)
+                    .isCurrentAcademicYear("Y")
+                    .build();
+            studentAcademicRecordRepository.save(newRecord);
+            return;
+        }
+
+        // Check if a record exists with matching academicYear and classId
+        StudentAcademicRecord matchingRecord = existingRecords.stream()
+                .filter(record -> academicYear.equals(record.getAcademicYear()) &&
+                        clsId.equals(record.getClsId()))
+                .findFirst()
+                .orElse(null);
+
+        List<StudentAcademicRecord> recordsToUpdate = new ArrayList<>();
+
+        if (matchingRecord != null) {
+            // Found matching record: mark it as current and update others
+            matchingRecord.setIsCurrentAcademicYear("Y");
+            matchingRecord.setClassRollNo(classRollNo);
+            recordsToUpdate.add(matchingRecord);
+
+            // Mark all other records as not current
+            for (StudentAcademicRecord other : existingRecords) {
+                if (!other.getId().equals(matchingRecord.getId())) {
+                    other.setIsCurrentAcademicYear("N");
+                    recordsToUpdate.add(other);
+                }
+            }
+        } else {
+            // No matching record found: create a new one and mark it as current
+            StudentAcademicRecord newRecord = StudentAcademicRecord.builder()
+                    .id(sequenceRepository.generateStudentAcademicRecordId())
+                    .studentId(studentId)
+                    .academicYear(academicYear)
+                    .clsId(clsId)
+                    .classRollNo(classRollNo)
+                    .isCurrentAcademicYear("Y")
+                    .build();
+            recordsToUpdate.add(newRecord);
+
+            // Mark all existing records as not current
+            for (StudentAcademicRecord existing : existingRecords) {
+                existing.setIsCurrentAcademicYear("N");
+                recordsToUpdate.add(existing);
+            }
+        }
+
+        // Batch save all updates
+        studentAcademicRecordRepository.saveAll(recordsToUpdate);
+    }
+
+
 }

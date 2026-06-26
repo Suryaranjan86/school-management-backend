@@ -15,13 +15,13 @@ INSERT INTO classes (name) VALUES ('11th');
 INSERT INTO classes (name) VALUES ('12th');
 
 -- Sample data for schools
-INSERT INTO school (name, address, state, district, pin,phone,logo_url)
+INSERT INTO school (name, address, state, district, pin, phone, payment_mode, session_start_month,session_end_month, logo_url)
  VALUES ('Army_Public_School', '123 Main Street, City Center',
-'Maharashtra', 'Mumbai', '400001','9876543210','/images/Army_Public_School.png');
+ 'Maharashtra', 'Mumbai', '400001','9876543210', 'MONTHLY', 'APR','MAR', '/images/Army_Public_School.png');
 
-INSERT INTO school (name, address, state, district, pin,phone,logo_url)
+INSERT INTO school (name, address, state, district, pin, phone, payment_mode, session_start_month,session_end_month, logo_url)
  VALUES ('Kendriya Vidyalaya', '456 Elm Avenue, Suburb Area', 'Karnataka',
- 'Bangalore', '560001','9876543211','/images/Kendriya_Vidyalaya.png');
+ 'Bangalore', '560001','9876543211', 'YEARLY', 'APR','MAR' ,'/images/Kendriya_Vidyalaya.png');
 
 INSERT INTO public.users(name, email, username, password, role, school_id)
 VALUES ('admin1', 'admin1@gmail.com', 'admin1', 'admin1', 'admin', 'sch-1');

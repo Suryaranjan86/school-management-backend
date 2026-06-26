@@ -1,6 +1,8 @@
 package com.srs.school.entity;
 
+import com.srs.school.dto.PaymentMode;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,4 +27,13 @@ public class School {
     private String pin;
     private String phone;
     private String logoUrl;
+
+    @Column(name = "payment_mode")
+    private String paymentMode;
+
+    @Column(name = "session_start_month")
+    private String sessionStartMonth;
+
+    @Column(name = "session_end_month")
+    private String sessionEndMonth;
 }

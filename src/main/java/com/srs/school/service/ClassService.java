@@ -15,10 +15,12 @@ public class ClassService {
     private ClassRepository classRepository;
 
     public Classes saveClass(Classes cls) {
+
         return classRepository.save(cls);
     }
 
     public List<Classes> getAllClasses() {
+
         return classRepository.findAll();
     }
 
@@ -28,6 +30,7 @@ public class ClassService {
     }
 
     public void deleteClass(String id) {
+
         classRepository.deleteById(id);
     }
 
