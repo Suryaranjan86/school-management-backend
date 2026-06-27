@@ -24,7 +24,7 @@ INSERT INTO school (name, address, state, district, pin, phone, payment_mode, se
  'Bangalore', '560001','9876543211', 'YEARLY', 'APR','MAR' ,'/images/Kendriya_Vidyalaya.png');
 
 INSERT INTO public.users(name, email, username, password, role, school_id)
-VALUES ('admin1', 'admin1@gmail.com', 'admin1', 'admin1', 'admin', 'sch-1');
+VALUES ('admin1', 'admin1@gmail.com', 'admin', 'password123', 'admin', 'sch-1');
 
 INSERT INTO public.users(name, email, username, password, role, school_id)
 VALUES ('admin2', 'admin2@gmail.com', 'admin2', 'admin2', 'admin', 'sch-2');

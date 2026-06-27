@@ -6,7 +6,7 @@ public class NumberToWords {
             "Six", "Seven", "Eight", "Nine", "Ten", "Eleven",
             "Twelve", "Thirteen", "Fourteen", "Fifteen"};
 
-    static String[] tens = {"", "", "Twenty", "Thirty", "Forty", "Fifty"};
+    static String[] tens = {"", "", "Twenty", "Thirty", "Forty", "Fifty","Sixty","Seventy", "Eighty", "Ninety"};
 
     public static String convert(long n) {
         if (n == 0) return "Zero";

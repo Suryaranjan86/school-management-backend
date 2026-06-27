@@ -62,6 +62,7 @@ public class UserService {
         // Authentication successful
         response.setUsername(user.getUsername());
         response.setUserId(user.getId());
+        response.setRole(user.getRole());
         if (user.getSchool() != null) {
             response.setSchoolId(user.getSchool().getId());
         }
