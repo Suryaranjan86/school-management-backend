@@ -6,9 +6,10 @@ import com.srs.school.entity.*;
 import com.srs.school.repository.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.IntStream;
 import java.time.LocalDate;
 import java.util.stream.Collectors;
 
@@ -28,8 +29,10 @@ public class FeeService {
     private final ClassService classService;
     
     private static final String[] MONTHS_ARRAY = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
+    private static final Logger log = LoggerFactory.getLogger(FeeService.class);
 
     public FeePaymentResponseDto saveFeePayment(FeePaymentRequestDto feePaymentDto) {
+        log.info("Entering saveFeePayment - feePaymentDto: {}", feePaymentDto);
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             throw new RuntimeException("School ID is required");
@@ -70,16 +73,26 @@ public class FeeService {
 
 
     public List<FeePaymentResponseDto> getFeePaymentsByAcademicYear(String studentId, String academicYear) {
-        return feePaymentRepository.findByAcademicYear(studentId, academicYear);
+        log.info("Entering getFeePaymentsByAcademicYear - academicYear: {}, studentId: {}", academicYear, studentId);
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) {
+            return List.of();
+        }
+
+        return feePaymentRepository.findByAcademicYear(studentId, academicYear, schoolId);
     }
 
 
     public FeePaymentResponseDto getFeePaymentById(String id) {
-        return feePaymentRepository.findFeePaymentById(id);
+        log.info("Entering getFeePaymentById - id: {}", id);
+        String schoolId = SchoolContext.getSchoolId();
+        if (schoolId == null || schoolId.isEmpty()) return null;
+        return feePaymentRepository.findFeePaymentById(id, schoolId);
     }
 
 
     public List<DefaulterStudentDto> getDefaulters(String academicYear) {
+        log.info("Entering getDefaulters - academicYear: {}", academicYear);
 
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
@@ -144,7 +157,7 @@ public class FeeService {
 
         for (StudentAcademicRecord rec : records) {
             // get paid months for this student in this academic year
-            List<String> paid = feePaymentRepository.findStudentPaidMonthsByAcademicYear(rec.getStudentId(), academicYear);
+            List<String> paid = feePaymentRepository.findStudentPaidMonthsByAcademicYear(rec.getStudentId(), academicYear, schoolId);
             Set<String> paidSet = paid == null ? Collections.emptySet() : new HashSet<>(paid);
 
             List<String> pending = expectedMonths.stream()
@@ -184,6 +197,7 @@ public class FeeService {
      * Returns int[] {startYear, endYear} or null if cannot parse.
      */
     private int[] parseAcademicYear(String academicYear) {
+        log.info("Entering parseAcademicYear - academicYear: {}", academicYear);
         if (academicYear == null || academicYear.trim().isEmpty()) return null;
         String t = academicYear.trim();
         String[] parts = t.split("[^0-9]");
@@ -208,6 +222,7 @@ public class FeeService {
     }
 
     private int getMonthIndex(String monthStr) {
+        log.info("Entering getMonthIndex - monthStr: {}", monthStr);
         if (monthStr == null) return -1;
         String t = monthStr.trim();
         if (t.isEmpty()) return -1;

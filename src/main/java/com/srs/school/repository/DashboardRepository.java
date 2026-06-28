@@ -5,6 +5,8 @@ import com.srs.school.dto.SchoolStudentCountDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -14,7 +16,10 @@ public class DashboardRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    private static final Logger log = LoggerFactory.getLogger(DashboardRepository.class);
+
     public SchoolStudentCountDto getSchoolWiseStudentCount(String schoolId) {
+        log.info("Entering getSchoolWiseStudentCount - schoolId: {}", schoolId);
         if (schoolId == null || schoolId.isEmpty()) {
             return new SchoolStudentCountDto(0L, 0L, 0L);
         }
@@ -32,6 +37,7 @@ public class DashboardRepository {
     }
 
     public List<ClassStudentCountDto> getClassWiseCurrentAcademicSessionStudentCount(String schoolId) {
+        log.info("Entering getClassWiseCurrentAcademicSessionStudentCount - schoolId: {}", schoolId);
         if (schoolId == null || schoolId.isEmpty()) {
             return List.of();
         }

@@ -6,12 +6,16 @@ import com.srs.school.service.SchoolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/schools")
 public class SchoolController {
+
+    private static final Logger log = LoggerFactory.getLogger(SchoolController.class);
 
     @Autowired
     private SchoolService schoolService;
@@ -20,6 +24,7 @@ public class SchoolController {
     public ResponseEntity<School> addSchool(@RequestBody School school) {
         // Use school_id from header
         String schoolId = SchoolContext.getSchoolId();
+        log.info("Entering addSchool - header schoolId: {}, payload id: {}", schoolId, school != null ? school.getId() : null);
         if (schoolId != null && !schoolId.isEmpty()) {
             school.setId(schoolId);
         }
@@ -29,12 +34,14 @@ public class SchoolController {
 
     @GetMapping
     public ResponseEntity<List<School>> getAllSchools() {
+        log.info("Entering getAllSchools");
         List<School> schools = schoolService.getAllSchools();
         return ResponseEntity.ok(schools);
     }
 
     @GetMapping("/{schoolId}")
     public ResponseEntity<School> getSchoolById(@PathVariable String  schoolId) {
+        log.info("Entering getSchoolById - schoolId: {}", schoolId);
         School school = schoolService.getSchoolById(schoolId);
         if (school != null) {
             return ResponseEntity.ok(school);
@@ -47,6 +54,7 @@ public class SchoolController {
      */
     @GetMapping("/current/info")
     public ResponseEntity<School> getCurrentSchool() {
+        log.info("Entering getCurrentSchool");
         School school = schoolService.getCurrentSchool();
         if (school != null) {
             return ResponseEntity.ok(school);
@@ -56,12 +64,14 @@ public class SchoolController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSchool(@PathVariable String id) {
+        log.info("Entering deleteSchool - id: {}", id);
         schoolService.deleteSchool(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<School> updateSchool(@PathVariable String id, @RequestBody School school) {
+        log.info("Entering updateSchool - id: {}, school: {}", id, school);
         School updated = schoolService.updateSchool(id, school);
         if (updated != null) {
             return ResponseEntity.ok(updated);

@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -15,10 +17,12 @@ public class FeePaymentRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    private static final Logger log = LoggerFactory.getLogger(FeePaymentRepository.class);
+
     /**
      * RowMapper for FeePayment entity
      */
-    private RowMapper<FeePaymentResponseDto> feePaymentRowMapper = (rs, rowNum) -> FeePaymentResponseDto.builder()
+    private final RowMapper<FeePaymentResponseDto> feePaymentRowMapper = (rs, rowNum) -> FeePaymentResponseDto.builder()
             .id(rs.getString("id"))
             .studentAccRecId(rs.getString("stu_aca_rec_id"))
             .academicYear(rs.getString("academic_year"))
@@ -45,15 +49,17 @@ public class FeePaymentRepository {
      */
     public List<String> findStudentPaidMonthsByAcademicYear(
             String studentId,
-            String academicYear) {
+            String academicYear,
+            String schoolId) {
+        log.info("Entering findStudentPaidMonthsByAcademicYear - studentId: {}, academicYear: {}, schoolId: {}", studentId, academicYear, schoolId);
         String sql = "SELECT CONCAT(f.pay_month, '-', f.pay_year) as paid_months " +
                 "FROM fee_payment f " +
                 "INNER JOIN student_academic_record sar ON f.stu_aca_rec_id = sar.id " +
                 "INNER JOIN student s ON sar.student_id = s.id " +
-                "WHERE sar.student_id = ? AND sar.academic_year = ? AND s.is_deleted='N' " +
+                "WHERE sar.student_id = ? AND sar.academic_year = ? AND s.is_deleted='N' AND s.school_id = ? " +
                 "ORDER BY f.pay_year DESC, f.pay_month DESC";
 
-        return jdbcTemplate.queryForList(sql, String.class, studentId, academicYear);
+        return jdbcTemplate.queryForList(sql, String.class, studentId, academicYear, schoolId);
     }
 
     /**
@@ -68,7 +74,9 @@ public class FeePaymentRepository {
      */
     public List<FeePaymentResponseDto> findByAcademicYear(
             String studentId,
-            String academicYear) {
+            String academicYear,
+            String schoolId) {
+        log.info("Entering findByAcademicYear - academicYear: {}, studentId: {}, schoolId: {}", academicYear, studentId, schoolId);
         StringBuilder sql = new StringBuilder(
                 "SELECT f.id, f.stu_aca_rec_id, f.pay_month, f.pay_year, f.payment_date, " +
                 "f.transaction_id, f.offline_slip_no, f.mode_of_pay, f.amount, f.receipt_no, " +
@@ -78,15 +86,15 @@ public class FeePaymentRepository {
                 "INNER JOIN student_academic_record sar ON f.stu_aca_rec_id = sar.id " +
                 "INNER JOIN student s ON sar.student_id = s.id " +
                 "LEFT JOIN classes c ON sar.cls_id = c.id " +
-                "WHERE sar.academic_year = ? AND s.is_deleted='N'");
+                "WHERE sar.academic_year = ? AND s.is_deleted='N' AND s.school_id = ?");
 
         Object[] params;
 
         if (studentId != null) {
             sql.append(" AND sar.student_id = ?");
-            params = new Object[]{academicYear, studentId};
+            params = new Object[]{academicYear, schoolId, studentId};
         } else {
-            params = new Object[]{academicYear};
+            params = new Object[]{academicYear, schoolId};
         }
 
         return jdbcTemplate.query(sql.toString(), feePaymentRowMapper, params);
@@ -99,6 +107,7 @@ public class FeePaymentRepository {
      * VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      */
     public int saveFeePayment(FeePaymentResponseDto feePayment) {
+        log.info("Entering saveFeePayment - feePayment id: {}", feePayment != null ? feePayment.getId() : null);
         String sql = "INSERT INTO fee_payment (id, stu_aca_rec_id, pay_month, pay_year, " +
                 "payment_date, transaction_id, offline_slip_no, mode_of_pay, amount, receipt_no) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -127,7 +136,8 @@ public class FeePaymentRepository {
      * INNER JOIN student s ON sar.student_id = s.id
      * WHERE f.id = ? AND s.is_deleted='N'
      */
-    public FeePaymentResponseDto findFeePaymentById(String id) {
+    public FeePaymentResponseDto findFeePaymentById(String id, String schoolId) {
+        log.info("Entering findFeePaymentById - id: {}, schoolId: {}", id, schoolId);
         String sql = "SELECT f.id, f.stu_aca_rec_id, f.pay_month, f.pay_year, f.payment_date, " +
                 "f.transaction_id, f.offline_slip_no, f.mode_of_pay, f.amount, f.receipt_no, " +
                 "'' as academic_year, '' as cls_id, '' as cls_name, COALESCE(s.name, '') as student_name, " +
@@ -135,9 +145,9 @@ public class FeePaymentRepository {
                 "FROM fee_payment f " +
                 "INNER JOIN student_academic_record sar ON f.stu_aca_rec_id = sar.id " +
                 "INNER JOIN student s ON sar.student_id = s.id " +
-                "WHERE f.id = ? AND s.is_deleted='N'";
+                "WHERE f.id = ? AND s.is_deleted='N' AND s.school_id = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, feePaymentRowMapper, id);
+            return jdbcTemplate.queryForObject(sql, feePaymentRowMapper, id, schoolId);
         } catch (Exception e) {
             return null;
         }

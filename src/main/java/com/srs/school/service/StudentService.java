@@ -9,6 +9,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 
 @Service
 public class StudentService {
+    private static final Logger log = LoggerFactory.getLogger(StudentService.class);
 
     @Autowired
     private StudentRepository studentRepository;
@@ -34,6 +37,7 @@ public class StudentService {
 
     @Transactional
     public StudentResponse saveStudent(StudentRequestDto studentDto) {
+        log.info("Entering saveStudent - studentDto: {}", studentDto);
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             throw new RuntimeException("School ID is required");
@@ -62,6 +66,7 @@ public class StudentService {
     }
 
     public List<ClassCountDto> getStudentsByClassSummary() {
+        log.info("Entering getStudentsByClassSummary");
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             return List.of();
@@ -77,6 +82,7 @@ public class StudentService {
     }
 
     public GenderSummaryDto getGenderSummary() {
+        log.info("Entering getGenderSummary");
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             return new GenderSummaryDto(0L, 0L);
@@ -96,6 +102,7 @@ public class StudentService {
     }
 
     public List<StudentRequestDto> getAllStudents() {
+        log.info("Entering getAllStudents");
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             return List.of();
@@ -104,6 +111,7 @@ public class StudentService {
     }
 
     public StudentRequestDto getStudentById(String id) {
+        log.info("Entering getStudentById - id: {}", id);
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             return null;
@@ -112,6 +120,7 @@ public class StudentService {
     }
 
     public void deleteStudent(String id) {
+        log.info("Entering deleteStudent - id: {}", id);
         String schoolId = SchoolContext.getSchoolId();
         if (schoolId == null || schoolId.isEmpty()) {
             throw new RuntimeException("School ID is required");
@@ -126,6 +135,7 @@ public class StudentService {
 
     @Transactional
     public StudentResponse updateStudent(String id, StudentRequestDto studentDto) {
+        log.info("Entering updateStudent - id: {}, studentDto: {}", id, studentDto);
         String schoolId = SchoolContext.getSchoolId();
         Optional<StudentResponse> existing = studentRepository.findById(id);
         if (existing.isPresent()) {
@@ -158,6 +168,8 @@ public class StudentService {
      */
     private void handleStudentAcademicRecord(String studentId, String schoolId, String academicYear,
                                              String clsId, String classRollNo) {
+        log.info("Entering handleStudentAcademicRecord - studentId: {}, schoolId: {}, academicYear: {}, clsId: {}, classRollNo: {}",
+                studentId, schoolId, academicYear, clsId, classRollNo);
         if (academicYear == null || academicYear.isEmpty()) {
             return; // Skip if academic year is not provided
         }

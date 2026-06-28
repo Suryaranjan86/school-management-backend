@@ -29,16 +29,16 @@ services:
       - pgadmin_data:/var/lib/pgadmin
 
   backend:
-    image: suryaranjan1995/school-backend:latest
+    image: suryaranjan1995/school-management-backend:v1.0.0
     container_name: school-backend
     restart: always
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/school_db
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-ancient-violet-aocdyy53-pooler.c-2.ap-southeast-1.aws.neon.tech:5432/school_db?sslmode=require
+      SPRING_DATASOURCE_USERNAME: neondb_owner
+      SPRING_DATASOURCE_PASSWORD: npg_4crVDNUZvO6j
     depends_on:
       - postgres
 

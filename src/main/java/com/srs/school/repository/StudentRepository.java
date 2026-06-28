@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +17,8 @@ public class StudentRepository {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    private static final Logger log = LoggerFactory.getLogger(StudentRepository.class);
 
     /**
      * RowMapper for Student entity
@@ -53,6 +57,7 @@ public class StudentRepository {
      * Save a new student
      */
     public StudentResponse save(StudentResponse student) {
+        log.info("Entering StudentRepository.save - student id: {}", student != null ? student.getId() : null);
         String sql = "INSERT INTO student (id, name, father_name, mother_name, date_of_birth, address, email, gender, school_id) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
@@ -75,6 +80,7 @@ public class StudentRepository {
      * Update an existing student
      */
     public StudentResponse update(StudentResponse student) {
+        log.info("Entering StudentRepository.update - student id: {}", student != null ? student.getId() : null);
         String sql = "UPDATE student SET name = ?, father_name = ?, mother_name = ?, date_of_birth = ?, " +
                 "address = ?, email = ?, gender = ? WHERE id = ?";
         
@@ -96,6 +102,7 @@ public class StudentRepository {
      * Find student by ID
      */
     public Optional<StudentResponse> findById(String id) {
+        log.info("Entering StudentRepository.findById - id: {}", id);
         String sql = "SELECT id, name, father_name, mother_name, date_of_birth, address, email, gender, school_id FROM student WHERE id = ? and is_deleted='N'";
         
         try {
@@ -112,6 +119,7 @@ public class StudentRepository {
      * Find student by ID and school ID
      */
     public Optional<StudentResponse> findByIdAndSchoolId(String id, String schoolId) {
+        log.info("Entering StudentRepository.findByIdAndSchoolId - id: {}, schoolId: {}", id, schoolId);
         String sql = "SELECT id, name, father_name, mother_name, date_of_birth, address, email, gender, school_id FROM student WHERE id = ? AND school_id = ? AND  is_deleted='N'";
         
         try {
@@ -126,6 +134,7 @@ public class StudentRepository {
      * Delete student by ID
      */
     public void deleteById(String id) {
+        log.info("Entering StudentRepository.deleteById - id: {}", id);
         String sql = "UPDATE student SET is_deleted = 'Y' WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
@@ -134,6 +143,7 @@ public class StudentRepository {
      * Count students by gender for a school
      */
     public List<Object[]> countStudentsByGender(String schoolId) {
+        log.info("Entering StudentRepository.countStudentsByGender - schoolId: {}", schoolId);
         String sql = "SELECT gender, COUNT(*) as count FROM student WHERE school_id = ? AND  is_deleted='N' GROUP BY gender ";
         
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
@@ -148,6 +158,7 @@ public class StudentRepository {
      * Get all students with their academic records as StudentDto
      */
     public List<StudentRequestDto> getAllStudentsDtoBySchoolId(String schoolId) {
+        log.info("Entering StudentRepository.getAllStudentsDtoBySchoolId - schoolId: {}", schoolId);
         String sql = "SELECT s.id as student_id, s.name, s.father_name, s.mother_name, s.date_of_birth, s.address, s.email, s.gender, " +
                 "sar.academic_year, COALESCE(sar.cls_id, '') as cls_id, COALESCE(c.name, '') as cls_name, " +
                 "sar.class_roll_no, sar.is_current_academic_year " +
@@ -163,6 +174,7 @@ public class StudentRepository {
      * Get a specific student by ID and school ID as StudentDto
      */
     public Optional<StudentRequestDto> getStudentDtoByIdAndSchoolId(String id, String schoolId) {
+        log.info("Entering StudentRepository.getStudentDtoByIdAndSchoolId - id: {}, schoolId: {}", id, schoolId);
         String sql = "SELECT s.id as student_id, s.name, s.father_name, s.mother_name, s.date_of_birth, s.address, s.email, s.gender, " +
                 "sar.academic_year, COALESCE(sar.cls_id, '') as cls_id, COALESCE(c.name, '') as cls_name, " +
                 "sar.class_roll_no, sar.is_current_academic_year " +

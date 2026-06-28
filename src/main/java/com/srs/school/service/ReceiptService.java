@@ -14,6 +14,7 @@ import com.srs.school.utils.ImageUtil;
 import com.srs.school.utils.NumberToWords;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.srs.school.context.SchoolContext;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.slf4j.Logger;
@@ -55,7 +56,12 @@ public class ReceiptService {
         try {
             logger.info("Generating receipt for payment ID: {}", id);
             
-            FeePaymentResponseDto payment = feePaymentRepository.findFeePaymentById(id);
+            String schoolId = SchoolContext.getSchoolId();
+            if (schoolId == null || schoolId.isEmpty()) {
+                logger.error("School ID not found in context");
+                throw new RuntimeException("School ID is required");
+            }
+            FeePaymentResponseDto payment = feePaymentRepository.findFeePaymentById(id, schoolId);
             if (payment == null) {
                 logger.error("Fee payment not found with id: {}", id);
                 throw new RuntimeException("Fee payment not found with id: " + id);
@@ -146,6 +152,7 @@ public class ReceiptService {
     }
 
     public String generateReceiptNo() {
+        logger.info("Entering generateReceiptNo");
 
         Long seq = sequenceRepository.getNextReceipt();
 
